@@ -1,7 +1,7 @@
 import Analyze_networks
 
 def main():
-    analyzer = Analyze_networks.AnalyzeNetwork("pcap-01.pcapng")
+    analyzer = Analyze_networks.AnalyzeNetwork("pcap-02.pcapng")
     
     lst = analyzer.get_info()
     print(lst)
@@ -15,7 +15,7 @@ def main():
     dev = analyzer.get_info_by_mac("00:0c:29:1d:1e:8f")
     print(dev)
 
-    dev = analyzer.get_info_by_ip("172.17.174.113")
+    dev = analyzer.get_info_by_ip("192.168.226.1")
     print(dev)
 
     os = analyzer.guess_os(dev)

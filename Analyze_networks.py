@@ -1,6 +1,7 @@
 from scapy.all import *
 import mac_vendor_lookup
 import Analyzer_helper
+from Analyzer_helper import OS
 
 class AnalyzeNetwork: 
     def __init__(self, pcap_path): 
@@ -77,19 +78,50 @@ class AnalyzeNetwork:
         """returns assumed operating system of a device""" 
         target_ip = device_info["IP"]
         packets = rdpcap(self.pcap_path)
+        possible_os = [True] * (len(OS) + 1)
         for pkt in packets:
             if pkt.haslayer(IP):
                 if pkt[IP].src == target_ip:
                     # we found a packet that was sent from the target
+                    if pkt.haslayer(ICMP):
+                        icmp_layer = pkt[ICMP]
+                        data_size = len(icmp_layer.payload)
+                        if data_size != 32:
+                            possible_os[OS.WINDOWS.value] = False     
+                        if data_size != 56:
+                            possible_os[OS.UNIX.value] = False
+                            possible_os[OS.SOLARIS.value] = False
+                            possible_os[OS.AIX.value] = False
+                        if data_size != 100:
+                            possible_os[OS.CISCO_ROUTER.value] = False               
+                    
+                    if "DF" in pkt[IP].flags:
+                        possible_os[OS.WINDOWS.value] = False     
+                        possible_os[OS.SOLARIS.value] = False
+                        possible_os[OS.CISCO_ROUTER.value] = False               
+                    else:
+                        possible_os[OS.UNIX.value] = False
+                        possible_os[OS.AIX.value] = False
+                        
                     ttl = pkt[IP].ttl
-                    if ttl == 64:
-                        return "Unix"
-                    if ttl == 128:
-                        return "Windows"
-                    if ttl == 254:
-                        return "Solaris, AIX"
-                    if ttl == 255:
-                        return "AIX, BSDI, Solaris, Cisco router"
+                    if ttl > 64:
+                        possible_os[OS.UNIX.value] = False
+                    if ttl > 128:
+                        possible_os[OS.WINDOWS.value] = False
+
+                    possible_os_strings = []
+                    if (possible_os[OS.AIX.value]):
+                        possible_os_strings.append(OS.AIX.name)
+                    if (possible_os[OS.WINDOWS.value]):
+                        possible_os_strings.append(OS.WINDOWS.name)
+                    if (possible_os[OS.UNIX.value]):
+                        possible_os_strings.append(OS.UNIX.name)
+                    if (possible_os[OS.SOLARIS.value]):
+                        possible_os_strings.append(OS.SOLARIS.name)
+                    if (possible_os[OS.CISCO_ROUTER.value]):
+                        possible_os_strings.append(OS.CISCO_ROUTER.name)
+                    return possible_os_strings
+
     def __repr__(self): 
         raise NotImplementedError 
     def __str__(self): 
