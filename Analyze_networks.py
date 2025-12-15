@@ -2,6 +2,7 @@ from scapy.all import *
 import mac_vendor_lookup
 import Analyzer_helper
 from Analyzer_helper import OS
+from scapy.layers.http import HTTP, HTTPRequest, HTTPResponse
 
 class AnalyzeNetwork: 
     def __init__(self, pcap_path): 
@@ -67,10 +68,23 @@ class AnalyzeNetwork:
                 ip = arp_layer.psrc
                 mac = arp_layer.hwsrc
                 Analyzer_helper.add_data_to_device_dict(device_dict, ip, mac, self.vendor_lookupper.lookup)
-            elif pkt.haslayer(IP):
+            if pkt.haslayer(IP):
                 ip = pkt[IP].src
                 mac = pkt[Ether].src
                 Analyzer_helper.add_data_to_device_dict(device_dict, ip, mac, self.vendor_lookupper.lookup)
+            if pkt.haslayer(TCP) and pkt.haslayer(Raw):
+                data = pkt[Raw].load
+                if (b'User-Agent' in data or b'Server' in data):
+                    data_str = data.decode()
+                    lines = data_str.split('\n')
+                    prog_data = []
+                    for line in lines:
+                        if 'User-Agent' in line:
+                            prog_data.append(line)
+                        if 'Server' in line:
+                            prog_data.append(line)
+                    if prog_data != []:
+                        device_dict["ProgData"] = prog_data
             if (device_dict not in devices_list and device_dict != {}):
                 devices_list.append(device_dict)
         return devices_list
