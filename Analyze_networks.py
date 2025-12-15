@@ -1,6 +1,5 @@
 from scapy.all import *
 import mac_vendor_lookup
-import dpkt
 
 class AnalyzeNetwork: 
     def __init__(self, pcap_path): 
@@ -12,19 +11,41 @@ class AnalyzeNetwork:
     def get_ips(self): 
         """returns a list of ip addresses (strings) that appear in 
         the pcap""" 
-        raise NotImplementedError 
+        ip_list = []
+        packets = rdpcap(self.pcap_path)
+        for pkt in packets:
+            if pkt.haslayer(ARP):
+                arp_layer = pkt[ARP]
+                ip = arp_layer.psrc
+                if ip not in ip_list:
+                    ip_list.append(ip)
+        return ip_list
     def get_macs(self): 
         """returns a list of MAC addresses (strings) that appear in 
-the pcap""" 
-        raise NotImplementedError 
+        the pcap"""
+        mac_list = []
+        packets = rdpcap(self.pcap_path)
+        for pkt in packets:
+            if pkt.haslayer(ARP):
+                arp_layer = pkt[ARP]
+                mac = arp_layer.hwsrc
+                if mac not in mac_list:
+                    mac_list.append(mac)
+        return mac_list
     def get_info_by_mac(self, mac): 
         """returns a dict with all information about the device with 
-given MAC address""" 
-        raise NotImplementedError 
+        given MAC address""" 
+        devices_list = self.get_info()
+        for device in devices_list:
+            if device["MAC"] == mac:
+                return device
     def get_info_by_ip(self, ip): 
         """returns a dict with all information about the device with 
-given IP address""" 
-        raise NotImplementedError 
+        given IP address""" 
+        devices_list = self.get_info()
+        for device in devices_list:
+            if device["IP"] == ip:
+                return device
     def get_info(self): 
         """returns a list of dicts with information about every 
         device in the pcap""" 
@@ -40,9 +61,10 @@ given IP address"""
                 device_dict["MAC"] = mac
                 device_dict["IP"] = ip
                 device_dict["VENDOR"] = self.vendor_lookupper.lookup(mac)
-            devices_list.append(device_dict)
+                if (device_dict not in devices_list):
+                    devices_list.append(device_dict)
         return devices_list
     def __repr__(self): 
         raise NotImplementedError 
     def __str__(self): 
-        raise NotImplementedError 
+        raise NotImplementedError
