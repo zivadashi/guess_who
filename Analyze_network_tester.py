@@ -1,7 +1,7 @@
 import Analyze_networks
 
 def main():
-    analyzer = Analyze_networks.AnalyzeNetwork("pcap-00.pcapng")
+    analyzer = Analyze_networks.AnalyzeNetwork("pcap-01.pcapng")
     
     lst = analyzer.get_info()
     print(lst)
@@ -15,7 +15,7 @@ def main():
     lst = analyzer.get_info_by_ip("172.17.174.113")
     print(lst)
 
-    lst = analyzer.get_info_by_mac("00:1c:7f:bf:cb:bd")
+    lst = analyzer.get_info_by_mac("00:0c:29:1d:1e:8f")
     print(lst)
 
 

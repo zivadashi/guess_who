@@ -1,5 +1,6 @@
 from scapy.all import *
 import mac_vendor_lookup
+import Analyzer_helper
 
 class AnalyzeNetwork: 
     def __init__(self, pcap_path): 
@@ -14,11 +15,14 @@ class AnalyzeNetwork:
         ip_list = []
         packets = rdpcap(self.pcap_path)
         for pkt in packets:
+            ip = ""
             if pkt.haslayer(ARP):
                 arp_layer = pkt[ARP]
                 ip = arp_layer.psrc
-                if ip not in ip_list:
-                    ip_list.append(ip)
+            elif pkt.haslayer(IP):
+                ip = pkt[IP].src
+            if (ip not in ip_list and ip != ""):
+                ip_list.append(ip)
         return ip_list
     def get_macs(self): 
         """returns a list of MAC addresses (strings) that appear in 
@@ -26,11 +30,14 @@ class AnalyzeNetwork:
         mac_list = []
         packets = rdpcap(self.pcap_path)
         for pkt in packets:
+            mac = ""
             if pkt.haslayer(ARP):
                 arp_layer = pkt[ARP]
                 mac = arp_layer.hwsrc
-                if mac not in mac_list:
-                    mac_list.append(mac)
+            elif pkt.haslayer(Ether):
+                mac = pkt[Ether].src
+            if (mac not in mac_list and mac != ""):
+                mac_list.append(mac)
         return mac_list
     def get_info_by_mac(self, mac): 
         """returns a dict with all information about the device with 
@@ -58,11 +65,13 @@ class AnalyzeNetwork:
                 arp_layer = pkt[ARP]
                 ip = arp_layer.psrc
                 mac = arp_layer.hwsrc
-                device_dict["MAC"] = mac
-                device_dict["IP"] = ip
-                device_dict["VENDOR"] = self.vendor_lookupper.lookup(mac)
-                if (device_dict not in devices_list):
-                    devices_list.append(device_dict)
+                Analyzer_helper.add_data_to_device_dict(device_dict, ip, mac, self.vendor_lookupper.lookup)
+            elif pkt.haslayer(IP):
+                ip = pkt[IP].src
+                mac = pkt[Ether].src
+                Analyzer_helper.add_data_to_device_dict(device_dict, ip, mac, self.vendor_lookupper.lookup)
+            if (device_dict not in devices_list and device_dict != {}):
+                devices_list.append(device_dict)
         return devices_list
     def __repr__(self): 
         raise NotImplementedError 
