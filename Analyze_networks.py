@@ -73,6 +73,23 @@ class AnalyzeNetwork:
             if (device_dict not in devices_list and device_dict != {}):
                 devices_list.append(device_dict)
         return devices_list
+    def guess_os(self, device_info):
+        """returns assumed operating system of a device""" 
+        target_ip = device_info["IP"]
+        packets = rdpcap(self.pcap_path)
+        for pkt in packets:
+            if pkt.haslayer(IP):
+                if pkt[IP].src == target_ip:
+                    # we found a packet that was sent from the target
+                    ttl = pkt[IP].ttl
+                    if ttl == 64:
+                        return "Unix"
+                    if ttl == 128:
+                        return "Windows"
+                    if ttl == 254:
+                        return "Solaris, AIX"
+                    if ttl == 255:
+                        return "AIX, BSDI, Solaris, Cisco router"
     def __repr__(self): 
         raise NotImplementedError 
     def __str__(self): 
