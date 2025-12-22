@@ -52,9 +52,11 @@ class AnalyzeNetwork:
         """returns a dict with all information about the device with 
         given IP address""" 
         devices_list = self.get_info()
+        relevant_devices = []
         for device in devices_list:
-            if device["IP"] == ip:
-                return device
+            if ("IP" in device.keys() and device["IP"] == ip):
+                relevant_devices.append(device)
+        return relevant_devices
     def get_info(self): 
         """returns a list of dicts with information about every 
         device in the pcap""" 
@@ -75,7 +77,7 @@ class AnalyzeNetwork:
             if pkt.haslayer(TCP) and pkt.haslayer(Raw):
                 data = pkt[Raw].load
                 if (b'User-Agent' in data or b'Server' in data):
-                    data_str = data.decode()
+                    data_str = data.decode('utf-8', errors='ignore')
                     lines = data_str.split('\n')
                     prog_data = []
                     for line in lines:
