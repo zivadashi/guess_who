@@ -138,6 +138,22 @@ class AnalyzeNetwork:
                         possible_os_strings.append(OS.CISCO_ROUTER.name)
                     return possible_os_strings
 
+    def get_hid(self):
+        packets = rdpcap(self.pcap_path)
+
+        coords_list = []
+        for i, pkt in enumerate(packets):
+            # We only care about packets that have a raw data payload
+            if pkt.haslayer(Raw):
+                load = pkt[Raw].load
+                
+                if len(load) == 32:
+                    load = load[27:]
+                    x, y = struct.unpack('<bb', load[2:4])
+                    coords_list.append((x, y))
+
+        return coords_list
+
     def __repr__(self): 
         raise NotImplementedError 
     def __str__(self): 
